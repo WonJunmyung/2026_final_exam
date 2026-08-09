@@ -32,6 +32,7 @@ namespace Silly
             Vector2Int.right
         };
         private Coroutine moveCoroutine;
+        Vector2Int next;
 
         private void Start()
         {
@@ -111,7 +112,7 @@ namespace Silly
                 currentDir = dirs[Random.Range(0, dirs.Length)];
             }
 
-            Vector2Int next = currentPos + currentDir;
+            next = currentPos + currentDir;
             FaceDirection(currentDir);
 
             if (!MapController.Instance.CanMove(next))
@@ -198,7 +199,7 @@ namespace Silly
                 currentPos = preCurrentPos;
             }
             state = AnimalState.Stop;
-            MapController.Instance.CompleteMove(this, preCurrentPos, currentPos);
+            MapController.Instance.CompleteMove(this, preCurrentPos, currentPos, next);
             if (moveCoroutine != null)
             {
                 StopCoroutine(moveCoroutine);
@@ -207,10 +208,11 @@ namespace Silly
             }
             this.transform.position = new Vector3(currentPos.x, 0, currentPos.y);
 
+            
         }
 
 
-        public void Meet(Animal other)
+        public void MeetAnimal(Animal other)
         {
 
             if (isMeeting || other.isMeeting)
@@ -218,10 +220,16 @@ namespace Silly
                 return;
             }
             PlayerController.Instance.SetStopDrag();
-            StartCoroutine(MeetRoutine(other));
+            StartCoroutine(PlayAnimal(other));
         }
 
-        IEnumerator MeetRoutine(Animal other)
+        public void MeetBuilding(Building other)
+        {
+            PlayerController.Instance.SetStopDrag();
+            StartCoroutine(PlayBuilding(other));
+        }
+
+        IEnumerator PlayAnimal(Animal other)
         {
             isMeeting = true;
             state = AnimalState.Stop;
@@ -231,8 +239,6 @@ namespace Silly
             //EventManager.Instance.OnAnimalMeet(this, other);
             
             // 서로 바라보기
-            //LookAt(other.currentPos);
-            //other.LookAt(currentPos);
             FaceDirection(other.currentPos);
             other.FaceDirection(currentPos);
 
@@ -247,42 +253,39 @@ namespace Silly
             isMeeting = false;
         }
 
-        //public void LookAt(Vector2Int target)
-        //{
-        //    Vector2Int dir = target - currentPos;
 
-        //    if (Mathf.Abs(dir.x) > Mathf.Abs(dir.y))
-        //    {
-        //        if(dir.x > 0)
-        //        {
-        //            currentDir = Vector2Int.right;
-        //        }
-        //        else
-        //        {
-        //            currentDir = Vector2Int.left;
-        //        }
-        //    }
-        //    else
-        //    {
-        //        if (dir.y > 0)
-        //        {
-        //            currentDir = Vector2Int.up;
-        //        }
-        //        else
-        //        {
-        //            currentDir = Vector2Int.down;
-        //        }
-        //    }
+        IEnumerator PlayBuilding(Building other)
+        {
+            isMeeting = true;
+            state = AnimalState.Stop;
 
-        //}
+
+            // 여기서 이벤트 실행
+            other.PlayBuilding(this);
+
+            yield return new WaitForSeconds(2f);
+
+            ChangeDirection();
+
+            state = AnimalState.Idle;
+
+            isMeeting = false;
+        }
 
         private void OnTriggerEnter(Collider other)
         {
             
             if (other.gameObject.CompareTag("Animal"))
             {
+                //여기서 메세지
                 Debug.Log(this.gameObject.name + " meet " + other.gameObject.name);
-                Meet(other.GetComponent<Animal>());
+                MeetAnimal(other.GetComponent<Animal>());
+            }
+
+            if (other.gameObject.CompareTag("Building"))
+            {
+                Debug.Log(this.gameObject.name + " meet " + other.gameObject.name);
+                MeetBuilding(other.GetComponent<Building>());
             }
         }
     }
