@@ -11,9 +11,12 @@ namespace silly
 {
     public enum PlayerState
     {
-        Dragble,
+        none,
+        AnimalInit,
+        AnimalMove,
         Build,
-        BuildMove
+        BuildMove,
+        
     }
     public class PlayerController : MonoBehaviour
     {
@@ -42,7 +45,7 @@ namespace silly
         private Plane dragPlane;
         private Vector3 offset;
 
-        public PlayerState playerState = PlayerState.Dragble;
+        public PlayerState playerState = PlayerState.none;
 
 
         /// <summary>
@@ -134,24 +137,63 @@ namespace silly
                 return;
             }
 
+            // 테스트용
             if (Input.GetKeyDown(KeyCode.Alpha1))
             {
-                playerState = PlayerState.Dragble;
+                AnimalControl.Instance.currentAnimal = null;
+                playerState = PlayerState.AnimalInit;
+                StartAnimal(AnimalName.Dog);
             }
-            else if (Input.GetKeyDown(KeyCode.Alpha2))
-            {
-                playerState = PlayerState.Build;
-                StartBuilding(BuildData.Tree);
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha3))
-            {
-                playerState = PlayerState.BuildMove;
-                //StartBuilding(BuildData.Tree);
-            }
+
+            //else if (Input.GetKeyDown(KeyCode.Alpha2))
+            //{
+            //    playerState = PlayerState.AnimalMove;
+            //}
+            //else if(Input.GetKeyDown(KeyCode.Alpha3))
+            //{
+            //    playerState = PlayerState.Build;
+            //    //StartBuilding(BuildData.Tree);
+            //}
+            //else if (Input.GetKeyDown(KeyCode.Alpha4))
+            //{
+            //    playerState = PlayerState.BuildMove;
+            //    //StartBuilding(BuildData.Tree);
+            //}
 
             switch (playerState)
             {
-                case PlayerState.Dragble:
+                case PlayerState.AnimalInit:
+                    {
+                        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+                        if (Physics.Raycast(ray, out RaycastHit hit, 500f, groundLayer))
+                        {
+                            Vector3 hitPoint = hit.point;
+                            Vector2Int gridPos = new Vector2Int(Mathf.FloorToInt(hitPoint.x), Mathf.FloorToInt(hitPoint.z));
+                            Vector3 displayPos = new Vector3((gridPos.x), 0, (gridPos.y));
+                            previewObj.transform.position = displayPos;
+
+                            bool canBuild = MapController.Instance.CanBuild(gridPos, Vector2Int.one);
+
+                            if (Input.GetMouseButtonDown(0) && previewObj != null)
+                            {
+                                //previewObj.transform.GetComponent<BoxCollider>().enabled = true;
+                                //previewObj.tag = "Building";
+                                Vector2Int pos = Util.WorldToGrid(previewObj.transform.position);
+                                Animal tempAnimal = previewObj.GetComponent<Animal>();
+                                MapController.Instance.animalMap[pos.x, pos.y] = tempAnimal;
+                                tempAnimal.SetCurrentPos(previewObj.transform.position);
+                                tempAnimal.state = AnimalState.Move;
+                                AnimalControl.Instance.currentAnimal = tempAnimal;
+                                previewObj = null;
+                                playerState = PlayerState.AnimalMove;
+                                
+                            }
+                        }
+                    }
+                    break;
+
+                case PlayerState.AnimalMove:
                     {
                         if (Input.GetMouseButtonDown(0))
                         {
@@ -167,6 +209,8 @@ namespace silly
                                 {
                                     offset = objDrag.position - ray.GetPoint(d);
                                 }
+                                objDrag.GetComponent<Animal>().state = AnimalState.Drag;
+                                AnimalControl.Instance.currentAnimal = objDrag.GetComponent<Animal>();
                             }
                         }
 
@@ -192,6 +236,7 @@ namespace silly
                             if (objDrag.gameObject.CompareTag("Animal"))
                             {
                                 SetStopDrag();
+                                
                             }
                         }
                     }
@@ -214,7 +259,11 @@ namespace silly
                             if (Input.GetMouseButtonDown(0) && previewObj != null)
                             {
                                 previewObj.transform.GetComponent<BoxCollider>().enabled = true;
+                                previewObj.tag = "Building";
+                                Vector2Int pos = Util.WorldToGrid(previewObj.transform.position);
+                                MapController.Instance.map[pos.x, pos.y] = 1;
                                 previewObj = null;
+                                
                                 playerState = PlayerState.BuildMove;
                             }
                         }
@@ -264,9 +313,11 @@ namespace silly
 
         public void SetStopDrag()
         {
+            Debug.Log("SetStopDrag");
             if (objDrag != null && objDrag.CompareTag("Animal"))
             {
                 objDrag.GetComponent<Animal>().SetCurrentPos(objDrag.position);
+                objDrag.GetComponent<Animal>().state = AnimalState.Stop;
                 objDrag = null;
             }
         }
@@ -276,6 +327,12 @@ namespace silly
             previewObj = Instantiate(buildingPrefab);
             buildingData = previewObj.GetComponent<Building>();
             buildingData.SetBuilding(buildingNum);
+        }
+
+        public void StartAnimal(AnimalName animalName)
+        {
+            previewObj = Instantiate(AnimalControl.Instance.animalPrefab[(int)animalName]);
+            previewObj.GetComponent<Animal>().state = AnimalState.Drag;
         }
     }
 }

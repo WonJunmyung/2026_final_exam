@@ -1,5 +1,5 @@
-using System.Collections;
-using System.Collections.Generic;
+Ôªøusing System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Silly
@@ -8,14 +8,20 @@ namespace Silly
     {
         public static MapController Instance;
         public int[,] map;
-        int mapSize = 10;
+        public int mapSize = 4;
         public Transform Map;
         public GameObject floorTile;
         public GameObject wallTile;
         public Animal[,] animalMap;
         public Animal[,] reserveMap;
         public GameObject[,] build;
-
+        Vector2Int[] dirs =
+        {
+                Vector2Int.up,
+                Vector2Int.down,
+                Vector2Int.left,
+                Vector2Int.right
+        };
         private void Awake()
         {
             Instance = this;
@@ -44,7 +50,7 @@ namespace Silly
             {
                 for (int y = 0; y < map.GetLength(1); y++)
                 {
-                    // map ∞™ «“¥Á
+                    // map Í∞í Ìï†Îãπ
                     map[x, y] = 0;
 
                     Vector3Int floorTilePos = new Vector3Int(x, 0, y);
@@ -77,26 +83,24 @@ namespace Silly
 
         public bool CanMove(Vector2Int pos)
         {
-            // ∏  π€
-            if (pos.x < 0 || pos.y < 0 ||
-                pos.x >= map.GetLength(0) ||
-                pos.y >= map.GetLength(1))
+            // Îßµ Î∞ñ
+            if (!IsInsideMap(pos))
             {
                 return false;
             }
 
-            // ∫Æ
+            // Î≤Ω
             if (map[pos.x, pos.y] == 1)
             {
                 return false;
             }
 
-            // ¥Ÿ∏• µøπ∞¿Ã ¿÷∞≈≥™ øπæ‡µ«æÓ ¿÷¿Ω
+            // Îã§Î•∏ ÎèôÎ¨ºÏù¥ ÏûàÏùå
             if (animalMap[pos.x, pos.y] != null)
             {
                 return false;
             }
-
+            // ÏòàÏïΩ ÎêòÏñ¥ ÏûàÏùå
             if (reserveMap[pos.x, pos.y] != null)
             {
                 return false;
@@ -105,9 +109,49 @@ namespace Silly
             return true;
         }
 
+        public bool RequestMove(Animal animal, Vector2Int from, Vector2Int to)
+        {
+            if (animal == null)
+            {
+                return false;
+            }
+
+            if (!IsInsideMap(to))
+            {
+                return false;
+            }
+
+            // Î≤Ω
+            if (map[to.x, to.y] == 1)
+            {
+                return false;
+            }
+
+            // ÌòÑÏû¨ Îã§Î•∏ ÎèôÎ¨º
+            Animal target = animalMap[to.x, to.y];
+
+            if (target != null && target != animal)
+            {
+                // ÎßåÎÇ® ÌåêÏ†ïÎèÑ Ïó¨Í∏∞ÏÑú
+                //HandleMeet(animal, target);
+
+                return false;
+            }
+
+            // Îã§Î•∏ ÎèôÎ¨ºÏù¥ Ïù¥ÎØ∏ ÏòàÏïΩ
+            if (reserveMap[to.x, to.y] != null)
+                return false;
+
+            // ÏòàÏïΩ
+            reserveMap[to.x, to.y] = animal;
+
+            return true;
+        }
+
+
         public bool CanBuild(Vector2Int pos, Vector2Int size)
         {
-            // ∏  π€
+            // Îßµ Î∞ñ
             if (pos.x < 0 || pos.y < 0 ||
                 pos.x > map.GetLength(0) - (size.x) ||
                 pos.y > map.GetLength(1) - (size.y))
@@ -115,7 +159,7 @@ namespace Silly
                 return false;
             }
 
-            //µøπ∞ ∞¸∑√
+            //ÎèôÎ¨º Í¥ÄÎ†®
             for (int i = 0; i < size.x; i++)
             {
                 for (int j = 0; j < size.y; j++)
@@ -131,7 +175,7 @@ namespace Silly
 
 
 
-                        //// ¥Ÿ∏• µøπ∞¿Ã ¿÷∞≈≥™ øπæ‡µ«æÓ ¿÷¿Ω
+                        //// Îã§Î•∏ ÎèôÎ¨ºÏù¥ ÏûàÍ±∞ÎÇò ÏòàÏïΩÎêòÏñ¥ ÏûàÏùå
                         //if (animalMap[tempX, tempY] != null)
                         //{
                         //    return false;
@@ -147,53 +191,28 @@ namespace Silly
 
             return true;
         }
-
-        public bool Reserve(Animal animal, Vector2Int to)
+        public Animal GetAnimal(Vector2Int pos)
         {
-            // ∏  π€
-            if (to.x < 0 || to.y < 0 ||
-                to.x >= map.GetLength(0) ||
-                to.y >= map.GetLength(1))
+            if (pos.x < 0 || pos.y < 0 || pos.x >= animalMap.GetLength(0) || pos.y >= animalMap.GetLength(1))
             {
-                return false;
+                return null;
             }
 
-            // ∫Æ
-            if (map[to.x, to.y] == 1)
-            {
-                return false;
-            }
-
-            // ¥Ÿ∏• µøπ∞¿Ã ¿÷¿∏∏È ∏∏≥≤ ¿Ã∫•∆Æ
-            //Animal other = animalMap[to.x, to.y];
-
-            //if (other != null)
-            //{
-            //    animal.Meet(other);
-
-            //    return false;
-            //}
-
-            // øπæ‡µ» ≈∏¿œ
-            if (reserveMap[to.x, to.y] != null)
-            {
-                return false;
-            }
-
-            reserveMap[to.x, to.y] = animal;
-
-            build[to.x, to.y].transform.GetChild(0).GetComponent<Renderer>().material.color = Color.beige;
-
-            return true;
+            return animalMap[pos.x, pos.y];
         }
+
+
+
         public void CompleteMove(Animal animal, Vector2Int from, Vector2Int to)
         {
             reserveMap[to.x, to.y] = null;
 
             animalMap[from.x, from.y] = null;
-            build[from.x, from.y].transform.GetChild(0).GetComponent<Renderer>().material.color = Color.black;
+            //build[from.x, from.y].transform.GetChild(0).GetComponent<Renderer>().material.color = UnityEngine.Color.aliceBlue;
+
+
             animalMap[to.x, to.y] = animal;
-            build[to.x, to.y].transform.GetChild(0).GetComponent<Renderer>().material.color = Color.beige;
+            //build[to.x, to.y].transform.GetChild(0).GetComponent<Renderer>().material.color = UnityEngine.Color.beige;
 
         }
 
@@ -202,19 +221,163 @@ namespace Silly
             reserveMap[to.x, to.y] = null;
 
             animalMap[from.x, from.y] = null;
-            build[from.x, from.y].transform.GetChild(0).GetComponent<Renderer>().material.color = Color.black;
+            //build[from.x, from.y].transform.GetChild(0).GetComponent<Renderer>().material.color = UnityEngine.Color.black;
 
             reserveMap[next.x, next.y] = null;
 
             animalMap[next.x, next.y] = null;
-            build[next.x, next.y].transform.GetChild(0).GetComponent<Renderer>().material.color = Color.black;
+            //build[next.x, next.y].transform.GetChild(0).GetComponent<Renderer>().material.color = UnityEngine.Color.black;
 
             animalMap[to.x, to.y] = animal;
-            build[to.x, to.y].transform.GetChild(0).GetComponent<Renderer>().material.color = Color.beige;
-
-
-
+            //build[to.x, to.y].transform.GetChild(0).GetComponent<Renderer>().material.color = UnityEngine.Color.beige;
         }
 
+        
+
+        public List<Vector2Int> FindPath(Vector2Int start, Vector2Int target)
+        {
+            Queue<Vector2Int> queue = new Queue<Vector2Int>();
+
+            Dictionary<Vector2Int, Vector2Int> cameFrom = new Dictionary<Vector2Int, Vector2Int>();
+
+            queue.Enqueue(start);
+            cameFrom[start] = start;
+
+            
+
+            while (queue.Count > 0)
+            {
+                Vector2Int current = queue.Dequeue();
+
+                if (current == target)
+                {
+                    break;
+                }
+
+                foreach (Vector2Int dir in dirs)
+                {
+                    Vector2Int next = current + dir;
+
+                    if (!IsInsideMap(next))
+                    {
+                        continue;
+                    }
+
+                    // Î≤Ω
+                    if (map[next.x, next.y] == 1)
+                    {
+                        continue;
+                    }
+
+                    // Ïù¥ÎØ∏ Î∞©Î¨∏
+                    if (cameFrom.ContainsKey(next))
+                    {
+                        continue;
+                    }
+
+                    queue.Enqueue(next);
+                    cameFrom[next] = current;
+                }
+            }
+
+            // Î™©Ï†ÅÏßÄÍπåÏßÄ Í∏∏Ïù¥ ÏóÜÏùå
+            if (!cameFrom.ContainsKey(target))
+            {
+                return null;
+            }
+
+            // Í≤ΩÎ°ú Î≥µÏõê
+            List<Vector2Int> path = new List<Vector2Int>();
+
+            Vector2Int pos = target;
+
+            while (pos != start)
+            {
+                path.Add(pos);
+                pos = cameFrom[pos];
+            }
+
+            path.Reverse();
+
+            return path;
+        }
+
+        public bool IsInsideMap(Vector2Int pos)
+        {
+            if (pos.x >= 0 && pos.y >= 0 && pos.x < map.GetLength(0) && pos.y < map.GetLength(1))
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public void CancelMove(Animal animal, Vector2Int pos)
+        {
+            if (!IsInsideMap(pos))
+            {
+                return;
+            }
+                
+
+            if (reserveMap[pos.x, pos.y] == animal)
+            {
+                reserveMap[pos.x, pos.y] = null;
+            }
+        }
+
+        
+        public Vector2Int GetHunger(Vector2Int pos, BuildData buildData)
+        {
+            List<GameObject> objHunger = GameObject.FindGameObjectsWithTag("Building").ToList();
+
+            List<GameObject> buildDataList = objHunger.FindAll(A=>A.GetComponent<Building>().buildData == buildData);
+
+            if (buildDataList.Count < 1)
+            {
+                return -Vector2Int.one;
+            }
+
+            Vector2Int[] objHungerPos = new Vector2Int[buildDataList.Count];
+            for(int i=0; i< buildDataList.Count; i++)
+            {
+                objHungerPos[i] = Util.WorldToGrid(buildDataList[i].transform.position);
+            }
+
+            float minDistance = Vector2.SqrMagnitude(objHungerPos[0] - pos);
+
+            int num = 0;
+            for(int i=1; i< buildDataList.Count; i++)
+            {
+                float distance = Vector2.SqrMagnitude(objHungerPos[i] - pos);
+                if(distance < minDistance)
+                {
+                    minDistance = distance;
+                    num = i;
+                }
+            }
+            return objHungerPos[num];
+        }
+
+        public GameObject GetRandomPosition()
+        {
+            List<GameObject> list = new List<GameObject>();
+
+            for (int i = 0; i < map.GetLength(0); i++)
+            {
+                for (int j = 0; j < map.GetLength(1); j++)
+                {
+                    if (map[i, j] != 1)
+                    {
+                        list.Add(build[i, j]);
+                    }
+                }
+            }
+
+            return list[Random.Range(0, list.Count)];
+        }
+
+
     }
+
+
 }

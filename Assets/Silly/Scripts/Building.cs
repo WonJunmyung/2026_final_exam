@@ -13,24 +13,29 @@ namespace Silly
         /// 동물이 먹으면 자동 제거
         /// </summary>
         EatBox,
+        /// <summary>
         /// 물통
         /// 수분유지 회복
         /// 10
         /// 드래그 가능
         /// 동물이 마시면 자동 제거
+        /// 오아시스 포함
+        /// </summary>
         WaterBox,
+        /// <summary>
         /// 나무
         /// 체력 회복
         /// 게임시간 30분마다 보유 중인 나무 중 임의의 하나에서 랜덤아이템박스 생성
         /// 20
         /// 드래그 가능
         /// 제거되지 않음
-        Tree,
-        /// 오아시스
-        /// 수분유지 회복
-        /// (고정 배치)
-        /// 드래그 불가능
-        Oasis
+        /// </summary>
+        Tree
+        ///// 오아시스
+        ///// 수분유지 회복
+        ///// (고정 배치)
+        ///// 드래그 불가능
+        //Oasis
     }
     public class Building : MonoBehaviour
     {
@@ -45,7 +50,6 @@ namespace Silly
             {
                 case BuildData.EatBox:
                     buildSize = 1;
-                    
                     break;
                 case BuildData.WaterBox:
                     buildSize = 1;
@@ -53,9 +57,9 @@ namespace Silly
                 case BuildData.Tree:
                     buildSize = 1;
                     break;
-                case BuildData.Oasis:
-                    buildSize = 1;
-                    break;
+                //case BuildData.Oasis:
+                //    buildSize = 1;
+                //    break;
             }
             
             size = new Vector2Int(buildSize, buildSize);
@@ -81,16 +85,16 @@ namespace Silly
             switch (buildData)
             {
                 case BuildData.EatBox:
-                    Destroy(this.gameObject,1.0f);
+                    Destroy(this.gameObject);
                     break;
                 case BuildData.WaterBox:
-                    Destroy(this.gameObject,1.0f);
+                    Destroy(this.gameObject);
                     break;
                 case BuildData.Tree:
                     
                     break;
-                case BuildData.Oasis:
-                    break;
+                //case BuildData.Oasis:
+                //    break;
             }
         }
     }

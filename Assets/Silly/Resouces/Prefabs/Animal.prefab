@@ -48,8 +48,22 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Silly::Silly.Animal
   moveSpeed: 2
+  exp: 0
+  lv: 0
+  hunger: 100
+  water: 100
+  hp: 100
+  waterCount: 0
+  state: 0
   currentPos: {x: 0, y: 0}
-  isMeeting: 0
+  HungerPos: {x: 0, y: 0}
+  MeetCooldown: 10
+  eventLayer:
+    serializedVersion: 2
+    m_Bits: 576
+  animalName: 0
+  animalTime: 0
+  timeCal: 24
 --- !u!54 &4106390331278990466
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -75,7 +89,7 @@ Rigidbody:
   m_UseGravity: 0
   m_IsKinematic: 0
   m_Interpolate: 0
-  m_Constraints: 0
+  m_Constraints: 84
   m_CollisionDetection: 0
 --- !u!65 &5554787113256939269
 BoxCollider:
@@ -96,8 +110,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1.1, y: 1, z: 1.1}
-  m_Center: {x: 0.5, y: 0, z: 0.5}
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0.5, y: 0.5, z: 0.5}
 --- !u!1001 &2723932263325455658
 PrefabInstance:
   m_ObjectHideFlags: 0
